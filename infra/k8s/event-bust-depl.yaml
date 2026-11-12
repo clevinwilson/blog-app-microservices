@@ -13,7 +13,7 @@ spec:
         app: event-bus # label applied to Pods created by this Deployment, matched by the selector above
     spec:
       containers:
-        - name: posts # name given to the container inside the Pod
+        - name: event-bus # name given to the container inside the Pod
           image: clevinmw/event-bus # Docker image (and tag) to run inside the container
 ---  # all us to cleate multiple objects in a single YAML file, separated by '---'
 apiVersion: v1 # version of the Kubernetes API used to create this object
