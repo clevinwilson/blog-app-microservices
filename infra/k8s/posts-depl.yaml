@@ -1,0 +1,31 @@
+apiVersion: apps/v1 # version of the Kubernetes API used to create this object
+kind: Deployment # type of resource being created - manages a set of replica Pods
+metadata:
+  name: posts-depl # name of this Deployment object, used to reference it within the cluster
+spec:
+  replicas: 1 # number of Pod instances to run for this Deployment
+  selector:
+    matchLabels:
+      app: posts # tells the Deployment which Pods to manage, based on this label
+  template:
+    metadata:
+      labels:
+        app: posts # label applied to Pods created by this Deployment, matched by the selector above
+    spec:
+      containers:
+        - name: posts # name given to the container inside the Pod
+          image: clevinmw/posts # Docker image (and tag) to run inside the container
+---  # all us to cleate multiple objects in a single YAML file, separated by '---'
+apiVersion: v1 # version of the Kubernetes API used to create this object
+kind: Service # type of resource being created - exposes a set of Pods as a network service
+metadata:
+  name: posts-clusterip-srv # name of this Service object, used to reference it within the cluster give different name than the node port service in posts-srv.yaml else it will replace the nodeport service with this service
+spec:
+  selector:
+    app: posts # tells the Service which Pods to route traffic to, based on this label
+  type: ClusterIP # if we are not specifing type, the service will be of type ClusterIP, which is only accessible within the cluster
+  ports:
+    - name: posts # name of the port, used to reference it within the cluster
+      protocol: TCP # protocol used by the port
+      port: 4000 # port number exposed by the Service of the pod 
+      targetPort: 4000 # port number on the Pod that the Service should route traffic to our application

@@ -13,18 +13,18 @@ app.post('/events', async (req, res) => {
 
     console.log('Event Received', event.type);
 
-    await axios.post('http://localhost:4000/events', event).catch(err => {
+    await axios.post('http://posts-clusterip-srv:4000/events', event).catch(err => {
         console.log('Error sending event to posts service:', err.message);
     });
-    await axios.post('http://localhost:4001/events', event).catch(err => {
-        console.log('Error sending event to comments service:', err.message);
-    });
-    await axios.post('http://localhost:4002/events', event).catch(err => {
-        console.log('Error sending event to query service:', err.message);
-    });
-    await axios.post('http://localhost:4003/events', event).catch(err => {
-        console.log('Error sending event to moderation service:', err.message);
-    });
+    // await axios.post('http://localhost:4001/events', event).catch(err => {
+    //     console.log('Error sending event to comments service:', err.message);
+    // });
+    // await axios.post('http://localhost:4002/events', event).catch(err => {
+    //     console.log('Error sending event to query service:', err.message);
+    // });
+    // await axios.post('http://localhost:4003/events', event).catch(err => {
+    //     console.log('Error sending event to moderation service:', err.message);
+    // });
 
     res.send({ status: 'OK' });
 })

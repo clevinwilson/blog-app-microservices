@@ -1,0 +1,12 @@
+apiVersion: v1 # version of the Kubernetes API used to create this object
+kind: Service # type of resource being created - exposes a set of Pods as a network service
+metadata:
+  name: posts-srv # name of this Service object, used to reference it within the cluster
+spec:
+  type: LoadBalancer # type of Service, Docker Desktop exposes this directly on localhost at the service port
+  selector:
+    app: posts # tells the Service which Pods to target, based on this label
+  ports:
+    - name: posts-port # name of this port, used to reference it within the cluster
+      port: 4000 # port that the Service will expose (in this case, the port that the pod is listening on)
+      targetPort: 4000 # port on the Pods that the Service will forward traffic to (in this case, the port that the application is listening on)
