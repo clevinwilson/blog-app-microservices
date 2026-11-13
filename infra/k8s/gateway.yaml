@@ -1,0 +1,28 @@
+# ---------------------------------------------------------------------------
+# Gateway API replacement for ingress-nginx (retired March 2026).
+# Implementation: Envoy Gateway (CNCF). Install it once per cluster:
+#   helm install eg oci://docker.io/envoyproxy/gateway-helm --version v1.10.0 \
+#     -n envoy-gateway-system --create-namespace
+# The chart ships the Gateway API CRDs, so nothing else to install.
+# ---------------------------------------------------------------------------
+apiVersion: gateway.networking.k8s.io/v1 # stable Gateway API group (v1.6.1 ships with Envoy Gateway v1.10)
+kind: GatewayClass # cluster-scoped: declares WHICH controller implements our Gateways (the "nginx" of old)
+metadata:
+  name: envoy-gateway # name we reference from the Gateway below
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller # fixed string Envoy Gateway watches for
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway # the actual entry point into the cluster - replaces the Ingress object's infrastructure half
+metadata:
+  name: blog-gateway # referenced by every HTTPRoute via parentRefs
+spec:
+  gatewayClassName: envoy-gateway # binds this Gateway to the GatewayClass above
+  listeners:
+    - name: http # name of this listener, referenced by sectionName in a route if needed
+      hostname: blogapp.com 
+      protocol: HTTP # plain HTTP for local dev; swap to HTTPS + certificateRefs for production TLS
+      port: 80 # Envoy Gateway provisions a LoadBalancer Service on this port (Docker Desktop maps it to localhost)
+      allowedRoutes:
+        namespaces:
+          from: Same # only HTTPRoutes in this same namespace may attach - the secure default

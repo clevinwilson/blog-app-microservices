@@ -1,7 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-
-
 function CommentList({ comments }) {
     return (
         <ul className="list-group">

@@ -1,0 +1,75 @@
+# ---------------------------------------------------------------------------
+# HTTPRoutes - the routing half of the old Ingress object, now one resource
+# per concern so each service team can own its own routes.
+# Precedence is decided by the spec (Exact > RegularExpression > PathPrefix,
+# then longest path, then method match), NOT by file or rule order.
+# ---------------------------------------------------------------------------
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: posts-route # writes go to the posts service (the command side)
+spec:
+  parentRefs:
+    - name: blog-gateway # attach to the Gateway defined in gateway.yaml
+  rules:
+    - matches:
+        - path:
+            type: Exact # match only /post, not /post/anything
+            value: /post
+          method: POST # method matching is why we no longer need a separate URL for the write side
+      backendRefs:
+        - name: posts-clusterip-srv # the ClusterIP Service in posts-depl.yaml
+          port: 4000 # must match the Service's port, not the container port
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: query-route # reads go to the query service (the CQRS read side)
+spec:
+  parentRefs:
+    - name: blog-gateway
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /post
+          method: GET # same path as above, different method -> different backend
+      backendRefs:
+        - name: querys-srv
+          port: 4002
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: comments-route
+spec:
+  parentRefs:
+    - name: blog-gateway
+  rules:
+    - matches:
+        - path:
+            type: RegularExpression # Envoy Gateway supports regex paths; needed for the :id segment
+            value: /posts/[^/]+/comments # matches /posts/<any-id>/comments for both GET and POST
+      backendRefs:
+        - name: comments-srv
+          port: 4001
+# NOTE: event-bus-srv (4005) and moderations-srv (4003) intentionally have no
+# HTTPRoute. They are internal, pod-to-pod only, so the Gateway gives them no
+# public surface - the same reason you would never add them to an Ingress.
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: client-route
+spec:
+  parentRefs:
+    - name: blog-gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: client-srv
+          port: 5173
