@@ -45,13 +45,23 @@ app.post('/events', (req, res) => {
     res.send({ status: 'OK' });
 });
 
-app.listen(4002, async () => {
+const catchUp = async (attempt = 1) => {
+    try {
+        const res = await axios.get('http://event-bus-srv:4005/events');
+
+        for (let event of res.data) {
+            console.log('Processing event:', event.type);
+            handleEvents(event.type, event.data);
+        }
+
+        console.log(`Caught up on ${res.data.length} past event(s)`);
+    } catch (err) {
+        console.log(`Event bus not ready (attempt ${attempt}): ${err.code || err.message}. Retrying in 3s...`);
+        setTimeout(() => catchUp(attempt + 1), 3000);
+    }
+};
+
+app.listen(4002, () => {
     console.log("Query service is listening on port 4002");
-
-    const res = await axios.get('http://event-bus-srv:4005/events');
-
-    for (let event of res.data) {
-        console.log('Processing event:', event.type);
-        handleEvents(event.type, event.data);
-    };
+    catchUp();
 })
